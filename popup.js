@@ -1,3 +1,67 @@
+function changeStockInfoAndColor(stockInfo){
+    var cls = '';
+
+    var rate = stockInfo['increase'];
+
+    if(rate < 0) cls = 'success';
+    else if(rate > 0) cls = 'danger';
+
+    return "<tr " + "class=" + cls +  ">" +
+        "<td>" +
+        stockInfo['name'] +
+        "</td>" +
+        "<td>" +
+        stockInfo['price'] +
+        "</td>" +
+        "<td>" +
+        stockInfo['increase'] + "%" +
+        "</td>" +
+        "</tr>";
+}
+
+function changeMarketInfoAndColor(marketInfo) {
+    var cls = '';
+
+    var rate = marketInfo['rate'];
+
+    if(rate<0) cls = 'label label-success';
+    else if(rate>0) cls = 'label label-danger';
+
+
+    switch (marketInfo['market']){
+        case 'shanghai':
+            $('#ShPrice').removeClass();
+            $('#ShIns').removeClass();
+
+            $('#ShPrice').html(marketInfo['dot']);
+            $('#ShIns').html(marketInfo['rate'] + '%');
+
+            //$('#ShPrice').addClass(cls);
+            $('#ShIns').addClass(cls);
+            break;
+        case 'shenzhen':
+            $('#SzPrice').removeClass();
+            $('#SzIns').removeClass();
+
+            $('#SzPrice').html(marketInfo['dot']);
+            $('#SzIns').html(marketInfo['rate'] + '%');
+
+ //           $('#SzPrice').addClass(cls);
+            $('#SzIns').addClass(cls);
+            break;
+        case 'hsi':
+            $('#HsPrice').removeClass();
+            $('#HsIns').removeClass();
+
+            $('#HsPrice').html(marketInfo['dot']);
+            $('#HsIns').html(marketInfo['rate'] + '%');
+
+//            $('#HsPrice').addClass(cls);
+            $('#HsIns').addClass(cls);
+            break;
+    }
+}
+
 $(document).ready(function () {
 
     var queryBaiduUrl = "http://apis.baidu.com/apistore/stockservice/stock";
@@ -35,29 +99,24 @@ $(document).ready(function () {
 
                     //set market
                     var marketInfo = data['retData']['market'];
-                    $("#ShPrice").html(marketInfo['shanghai']['curdot'].toFixed(0));
-                    $("#SzPrice").html(marketInfo['shenzhen']['curdot'].toFixed(0));
-                    $("#HsPrice").html(marketInfo['HSI']['curdot'].toFixed(0));
-                    $("#ShIns").html(marketInfo['shanghai']['rate'] + '%');
-                    $("#SzIns").html(marketInfo['shenzhen']['rate'] + '%');
-                    $("#HsIns").html(marketInfo['HSI']['rate'] + '%');
+                    changeMarketInfoAndColor({'market': 'shanghai',
+                        'dot': marketInfo['shanghai']['curdot'].toFixed(0),
+                        'rate': marketInfo['shanghai']['rate']});
+                    changeMarketInfoAndColor({'market': 'shenzhen',
+                        'dot': marketInfo['shenzhen']['curdot'].toFixed(0),
+                        'rate': marketInfo['shenzhen']['rate']});
+                    changeMarketInfoAndColor({'market': 'hsi',
+                        'dot': marketInfo['HSI']['curdot'].toFixed(0),
+                        'rate': marketInfo['HSI']['rate']});
 
                     //set every stock
                     var stockInfo = data['retData']['stockinfo'];
 
                     for (var i = 0; i < stockInfo.length; ++i) {
 
-                        var tr = "<tr>" +
-                                    "<td>" +
-                                        stockInfo[i]['name'] +
-                                    "</td>" +
-                                    "<td>" +
-                                        stockInfo[i]['currentPrice'] +
-                                    "</td>" +
-                                    "<td>" +
-                                        stockInfo[i]['increase'].toFixed(2) + "%" +
-                                    "</td>" +
-                                 "</tr>";
+                        var tr = changeStockInfoAndColor({'name': stockInfo[i]['name'],
+                                                 'price': stockInfo[i]['currentPrice'],
+                                                 'increase': stockInfo[i]['increase'].toFixed(2)});
                         $("#result").append(tr);
                     }
 
