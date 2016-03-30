@@ -102,7 +102,7 @@ function changeMarketInfoAndColor(marketInfo) {
 function removeStockInfo() {
     $("tr").remove('.success');
     $("tr").remove('.danger');
-    $("tr").remove('info');
+    $("tr").remove('.info');
 }
 
 //query and set stock information
@@ -120,7 +120,7 @@ function getStockInfo(){
 
             queryStockInfo(stockIdPars, function(data){ //query success
 
-                    //console.log(data);
+                console.log(data);
                 if (data['errMsg'] != 'success') {
                     showMsg(MSG.SERVER_ERROR);
                     return;
@@ -146,9 +146,12 @@ function getStockInfo(){
 
                 for (var i = 0; i < stockInfo.length; ++i) {
 
-                    var tr = changeStockInfoAndColor({'name': stockInfo[i]['name'],
-                        'price': stockInfo[i]['currentPrice'],
-                        'increase': stockInfo[i]['increase'].toFixed(2)});
+                    var stock = {
+                        'name': stockInfo[i]['name'],
+                        'price': stockInfo[i]['currentPrice'] === 0 ? stockInfo[i]['closingPrice'] : stockInfo[i]['currentPrice'],
+                        'increase': stockInfo[i]['increase'] === -100? 0: stockInfo[i]['increase'].toFixed(2)
+                    };
+                    var tr = changeStockInfoAndColor(stock);
                     $("#result").append(tr);
                 }
             },
@@ -201,7 +204,7 @@ function checkStockId(id, success){
     }
     //query Baidu api check whether id is right or not
     queryStockInfo(val, function(data){
-        console.log(data);
+        //console.log(data);
         if(data['errMsg'] != 'success' || data['retData']['stockinfo'][0]['name'].length === 0) {
             showMsg(MSG.CODE_ERROR);
             return;
@@ -246,8 +249,6 @@ $(document).ready(function () {
         $('#StockID').val('');
 
     });
-
-
 
     //set delete event handler
     $("#DelID").click(function(){
