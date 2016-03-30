@@ -2,7 +2,8 @@
 var queryBaiduUrl = "http://apis.baidu.com/apistore/stockservice/stock";
 
 //Baidu Stock Information Api Key
-var apiKey = '35cef313060e63e4fee417308aa83925';
+//!!!!!Please visit site http://apistore.baidu.com/apiworks/servicedetail/115.html to apply for a api key
+var apiKey = '';
 
 //Message
 var MSG = {
@@ -224,19 +225,6 @@ $(document).ready(function () {
     $("#AddID").click(function(){
 
         var id = $("#StockID").val();
-        var val = "";
-
-        if(id.length != 6) {
-            showMsg(MSG.CODE_SIZE_ERROR);
-            return;
-        }
-        if (id.charAt(0) === '0' || id.charAt(0) === '3') {
-            val = 'sz' + id;
-        } else {
-            if (id.charAt(0) === '6') {
-                val = 'sh' + id;
-            }
-        }
 
         checkStockId(id, function(obj) {
             chrome.storage.sync.set(obj, function(){
@@ -255,17 +243,20 @@ $(document).ready(function () {
 
         var id = $("#StockID").val();
 
-        //if id exists in chrome.sync
-        chrome.storage.sync.get(null, function(items){
-            for(var key in items) {
-                if (id === key) {
-                    chrome.storage.sync.remove(id, function () {
-                        showMsg(MSG.DEL_INFO);
-                    });
-                    return;
+        checkStockId(id, function(){
+
+            chrome.storage.sync.get(null, function(items){
+                for(var key in items){
+                    if (id === key) {
+                        chrome.storage.sync.remove(id, function(){
+                            showMsg(MSG.DEL_INFO);
+                        });
+                        return;
+                    }
                 }
-            }
-            showMsg(MSG.CODE_ERROR);
+                //not in the storage area.
+                showMsg(MSG.CODE_ERROR);
+            });
         });
 
         //clear input
