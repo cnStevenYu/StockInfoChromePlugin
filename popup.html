@@ -55,7 +55,7 @@
     <div class="row">
 
         <div class="col-sm-12">
-            <table class="table table-hover" id="result">
+            <table class="table table-hover" id="result" style="margin-bottom: 5px">
                 <thead>
                 <tr>
                     <th>股票</th>
@@ -68,15 +68,25 @@
     </div>
 
     <div class="row" style="margin: -1">
-        <div class="col-xs-6 col-sm-6" style="padding-right: 1px">
+        <div class="col-xs-8 col-sm-8" style="padding-right: 1px">
             <input type="text" class="form-control" placeholder="6位股票编号" id="StockID"/>
         </div>
 
-        <div class="col-xs-6 col-sm-6" style="padding-left: 2px">
+        <div class="col-xs-4 col-sm-4" style="padding-left: 5px; padding-top: 2px">
             <div class="btn-group">
-                <button type="button" class="btn btn-primary btn-sm" id="AddID">Add</button>
-                <button type="button" class="btn btn-warning btn-sm" id="DelID">Del</button>
+                <button type="button" class="btn btn-primary btn-sm" id="AddID">A</button>
+                <button type="button" class="btn btn-warning btn-sm" id="DelID">D</button>
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-12" id="Alert">
+            <!--
+            <div class="alert alert-success" style="padding: 5px; margin-bottom: 0px">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close" style="font-size: inherit">&times;</a>
+                <strong>添加成功!</strong>
+            </div>
+            -->
         </div>
     </div>
 </div>
