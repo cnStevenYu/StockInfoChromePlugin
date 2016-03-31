@@ -1,12 +1,21 @@
-(function() {
+/**
+ *
+ * Created by cnSteven on 2016-3-28.
+ */
+
+(function(){
     //Baidu Stock Information api
-    var queryBaiduUrl = "http://apis.baidu.com/apistore/stockservice/stock";
+    var QueryBaiduUrl = "http://apis.baidu.com/apistore/stockservice/stock";
 
+    /*!!!!!
+     *Please visit site http://apistore.baidu.com/apiworks/servicedetail/115.html to apply for a api key
+     */
     //Baidu Stock Information Api Key
-    //!!!!!Please visit site http://apistore.baidu.com/apiworks/servicedetail/115.html to apply for a api key
-    var apiKey = '35cef313060e63e4fee417308aa83925';
+    var ApiKey = '35cef313060e63e4fee417308aa83925';
 
-    //Message
+    //Dom elements
+    var StockInput, StockInfo, AddBtn, DelBtn, ShPrice, SzPrice, HsPrice, ShIns, SzIns, HsIns;
+
     var MSG = {
         CODE_SIZE_ERROR: '请输入6位股票代码!',
         CODE_ERROR: '股票代码不正确!',
@@ -16,255 +25,278 @@
         DEL_INFO: '删除成功!'
     };
 
-    //DOM show message
-    function showMsg(str) {
-        var alter = '';
-        if (str === MSG.ADD_INFO || str === MSG.DEL_INFO) {
-            alter =
-                '<div class=\"alert alert-info\" style=\"padding: 5px; margin-bottom: 0px\">' +
-                '<a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" style=\"font-size: inherit\">\&times;</a>' +
-                '<strong>' + str + '</strong>' +
-                '</div>';
+    var Util = {
+
+        query: function(ids, done, fail) {
+            if (!done || !fail ||
+                typeof(done) != 'function' || typeof(fail) != 'function') return;
+
+            $.ajax({
+                url: QueryBaiduUrl,
+                async: true,
+                method: 'Get',
+                headers: {'apikey': ApiKey},
+                data: {stockid: ids, list: 1},
+                dataType: 'json'
+            })
+                .done(done)
+                .fail(fail);
+        },
+
+        checkStockId: function(id, success){
+            if (!success || typeof(success) != 'function') return;
+
+            var val = '';
+
+            if (id.length != 6) {
+                this.showMsg(MSG.CODE_SIZE_ERROR);
+                return;
+            }
+
+            if (id.charAt(0) === '0' || id.charAt(0) === '3') {
+                val = 'sz' + id;
+            } else {
+                if (id.charAt(0) === '6') {
+                    val = 'sh' + id;
+                } else {
+                    this.showMsg(MSG.CODE_ERROR);
+                    return;
+                }
+            }
+            //query Baidu api check whether id is right or not
+            this.query(val, function(data){
+                    //console.log(data);
+                    if (data['errMsg'] != 'success' || data['retData']['stockinfo'][0]['name'].length === 0) {
+                        this.showMsg(MSG.CODE_ERROR);
+                        return;
+                    }
+                    var stock = {};
+                    stock[id] = val;
+                    success(stock);
+                },
+                function(){
+                    this.showMsg(MSG.NETWORK_ERROR);
+                });
+        },
+
+        showMsg: function(str){
+            var alter = '';
+            if (str === MSG.ADD_INFO || str === MSG.DEL_INFO) {
+                alter =
+                    '<div class=\"alert alert-info\" style=\"padding: 5px; margin-bottom: 0px\">' +
+                    '<a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" style=\"font-size: inherit\">\&times;</a>' +
+                    '<strong>' + str + '</strong>' +
+                    '</div>';
+            }
+            else {
+                alter =
+                    '<div class=\"alert alert-warning\" style=\"padding: 5px; margin-bottom: 0px\">' +
+                    '<a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" style=\"font-size: inherit\">\&times;</a>' +
+                    '<strong>' + str + '</strong>' +
+                    '</div>';
+            }
+            $('#Alert').empty().append(alter);
+        },
+
+        removeStockInfo: function(){
+            $("tr").remove('.success').remove('.danger').remove('.info');
         }
-        else {
-            alter =
-                '<div class=\"alert alert-warning\" style=\"padding: 5px; margin-bottom: 0px\">' +
-                '<a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" style=\"font-size: inherit\">\&times;</a>' +
-                '<strong>' + str + '</strong>' +
-                '</div>';
-        }
-        $('#Alert').empty().append(alter);
+    };
+
+
+    //stock constructor
+    function Stock(name, price, increase) {
+        this.name = name;
+        this.price = price;
+        this.increase = increase;
     }
 
-    //DOM update stock information and color
-    function changeStockInfoAndColor(stockInfo) {
+    Stock.prototype.showStockInfo = function() {
         var cls = 'info';
 
-        var rate = stockInfo['increase'];
-
-        if (rate < 0) cls = 'success';//show green
-        else if (rate > 0) cls = 'danger';//show red
+        if (this.increase < 0) cls = 'success';//show green
+        else if (this.increase > 0) cls = 'danger';//show red
 
         return "<tr " + "class=" + cls + ">" +
             "<td>" +
-            stockInfo['name'] +
+            this.name +
             "</td>" +
             "<td>" +
-            stockInfo['price'] +
+            this.price +
             "</td>" +
             "<td>" +
-            stockInfo['increase'] + "%" +
+            this.increase + "%" +
             "</td>" +
             "</tr>";
+    };
+
+    //market constructor
+    function Market(name, dot, rate) {
+        this.name = name;
+        this.dot = dot;
+        this.rate = rate;
     }
 
-    //DOM update market information and color
-    function changeMarketInfoAndColor(marketInfo) {
+    Market.prototype.showMarketInfo = function(){
         var cls = '';
 
-        var rate = marketInfo['rate'];
+        if (this.rate < 0) cls = 'label label-success';//show green
+        else if (this.rate > 0) cls = 'label label-danger';//show red
 
-        if (rate < 0) cls = 'label label-success';//show green
-        else if (rate > 0) cls = 'label label-danger';//show red
-
-
-        switch (marketInfo['market']) {
+        switch(this.name) {
             case 'shanghai':
-                $('#ShPrice').removeClass().html(marketInfo['dot']);
-                $('#ShIns').removeClass().html(marketInfo['rate'] + '%').addClass(cls);
+                var test = $('#ShPrice');
+                test.removeClass().html(this.dot);
+                //$('#ShPrice').removeClass().html(this.dot);
+                $('#ShIns').removeClass().html(this.rate + '%').addClass(cls);
                 break;
 
             case 'shenzhen':
-                $('#SzPrice').removeClass().html(marketInfo['dot']);
-                $('#SzIns').removeClass().html(marketInfo['rate'] + '%').addClass(cls);
+                $('#SzPrice').removeClass().html(this.dot);
+                $('#SzIns').removeClass().html(this.rate + '%').addClass(cls);
                 break;
 
-            case 'hsi':
-                $('#HsPrice').removeClass().html(marketInfo['dot']);
-                $('#HsIns').removeClass().html(marketInfo['rate'] + '%').addClass(cls);
-
+            case 'HSI':
+                HsPrice.removeClass().html(this.dot);
+                HsIns.removeClass().html(this.rate + '%').addClass(cls);
                 break;
         }
-    }
+    };
 
-    //DOM remove stock information
-    function removeStockInfo() {
-        $("tr").remove('.success').remove('.danger').remove('.info');
-    }
+    var popup = {
+        add: function(){
+            var id = StockInput.val();
 
-    //query and set stock information
-    function getStockInfo() {
-        chrome.storage.sync.get(null, function (items) {
-
-            var stockIds = [];
-
-            for (var key in items) {
-                stockIds.push(items[key]);
-            }
-
-            var stockIdPars = '';
-
-            if (stockIds.length === 0)
-                stockIdPars = '000001';//not be empty.
-            else
-                stockIdPars = stockIds.join(',');
-
-            queryStockInfo(stockIdPars,
-                function (data) { //query success
-                    console.log(data);
-                    if (data['errMsg'] != 'success') {
-                        showMsg(MSG.SERVER_ERROR);
-                        return;
-                    }
-
-                    //set market
-                    var marketInfo = data['retData']['market'];
-                    changeMarketInfoAndColor({
-                        'market': 'shanghai',
-                        'dot': marketInfo['shanghai']['curdot'].toFixed(0),
-                        'rate': marketInfo['shanghai']['rate']
-                    });
-                    changeMarketInfoAndColor({
-                        'market': 'shenzhen',
-                        'dot': marketInfo['shenzhen']['curdot'].toFixed(0),
-                        'rate': marketInfo['shenzhen']['rate']
-                    });
-                    changeMarketInfoAndColor({
-                        'market': 'hsi',
-                        'dot': marketInfo['HSI']['curdot'].toFixed(0),
-                        'rate': marketInfo['HSI']['rate']
-                    });
-
-                    if (stockIds.length > 0) {//if user has added stock ids.
-
-                        //remove the existing stock
-                        removeStockInfo();
-
-                        //set every stock
-                        var stockInfo = data['retData']['stockinfo'];
-
-                        for (var i = 0; i < stockInfo.length; ++i) {
-
-                            var stock = {
-                                'name': stockInfo[i]['name'],
-                                'price': stockInfo[i]['currentPrice'] === 0 ? stockInfo[i]['closingPrice'] : stockInfo[i]['currentPrice'],
-                                'increase': stockInfo[i]['increase'] === -100 ? 0 : stockInfo[i]['increase'].toFixed(2)
-                            };
-                            var tr = changeStockInfoAndColor(stock);
-                            $("#result").append(tr);
-                        }
-                    }
-                },
-                function (data) {//query failed
-                    showMsg(MSG.NETWORK_ERROR);
-                });
-
-        });
-    }
-
-    //query stock information, call done if succeed and call fail if failed
-    function queryStockInfo(stockIds, done, fail) {
-        if (!done || !fail ||
-            typeof(done) != 'function' || typeof(fail) != 'function') return;
-
-        $.ajax({
-            url: queryBaiduUrl,
-            async: true,
-            method: 'Get',
-            headers: {'apikey': apiKey},
-            data: {stockid: stockIds, list: 1},
-            dataType: 'json'
-        })
-            .done(done)
-            .fail(fail);
-    }
-
-    /*check whether id is legal or not
-     if it's legal success is called, otherwise fail is called
-     */
-    function checkStockId(id, success) {
-
-        if (!success || typeof(success) != 'function') return;
-
-        var val = '';
-
-        if (id.length != 6) {
-            showMsg(MSG.CODE_SIZE_ERROR);
-            return;
-        }
-
-        if (id.charAt(0) === '0' || id.charAt(0) === '3') {
-            val = 'sz' + id;
-        } else {
-            if (id.charAt(0) === '6') {
-                val = 'sh' + id;
-            } else {
-                showMsg(MSG.CODE_ERROR);
-                return;
-            }
-        }
-
-        //query Baidu api check whether id is right or not
-        queryStockInfo(val, function (data) {
-                //console.log(data);
-                if (data['errMsg'] != 'success' || data['retData']['stockinfo'][0]['name'].length === 0) {
-                    showMsg(MSG.CODE_ERROR);
-                    return;
-                }
-                var stock = {};
-                stock[id] = val;
-                success(stock);
-            },
-            function () {
-                showMsg(MSG.NETWORK_ERROR);
-            });
-    }
-
-    $(document).ready(function () {
-
-        getStockInfo();
-
-        //set add event handler
-        $("#AddID").click(function () {
-
-            var id = $("#StockID").val();
-
-            checkStockId(id, function (obj) {
+            Util.checkStockId(id, function (obj) {
                 chrome.storage.sync.set(obj, function () {
                     //console.log(obj + 'added!');
-                    showMsg(MSG.ADD_INFO);
+                    Util.showMsg(MSG.ADD_INFO);
                 });
             });
 
             //clear input
-            $('#StockID').val('');
+            StockInput.val('');
+        },
+        del: function(){
+            var id = StockInput.val();
 
-        });
-
-        //set delete event handler
-        $("#DelID").click(function () {
-
-            var id = $("#StockID").val();
-
-            checkStockId(id, function () {
+            Util.checkStockId(id, function(){
 
                 chrome.storage.sync.get(null, function (items) {
                     for (var key in items) {
                         if (id === key) {
                             chrome.storage.sync.remove(id, function () {
-                                showMsg(MSG.DEL_INFO);
+                                Util.showMsg(MSG.DEL_INFO);
                             });
                             return;
                         }
                     }
                     //not in the storage area.
-                    showMsg(MSG.CODE_ERROR);
+                    Util.showMsg(MSG.CODE_ERROR);
                 });
             });
             //clear input
-            $('#StockID').val('');
-        });
+            StockInput.val('');
 
-        setInterval(getStockInfo, 2000);
+        },
+        update: function(){
+            chrome.storage.sync.get(null, function (items) {
+
+                var stockIds = [];
+
+                for (var key in items) {
+                    stockIds.push(items[key]);
+                }
+
+                var stockIdPars = '';
+
+                if (stockIds.length === 0)
+                    stockIdPars = '000001';//not be empty.
+                else
+                    stockIdPars = stockIds.join(',');
+
+                Util.query(stockIdPars,
+                    function (data) { //query success
+                        console.log(data);
+                        if (data['errMsg'] != 'success') {
+                            Util.showMsg(MSG.SERVER_ERROR);
+                            return;
+                        }
+
+                        //set market
+                        var marketInfo = data['retData']['market'];
+
+                        var shMarket = new Market('shanghai',
+                            marketInfo['shanghai']['curdot'].toFixed(0),
+                            marketInfo['shanghai']['rate']);
+
+                        shMarket.showMarketInfo();
+
+                        var szMarket = new Market('shenzhen',
+                            marketInfo['shenzhen']['curdot'].toFixed(0),
+                            marketInfo['shenzhen']['rate']);
+
+                        szMarket.showMarketInfo();
+
+                        var hsMarket = new Market('HSI',
+                            marketInfo['HSI']['curdot'].toFixed(0),
+                            marketInfo['HSI']['rate']);
+
+                        hsMarket.showMarketInfo();
+
+                        if (stockIds.length > 0) {//if user has added stock ids.
+
+                            //remove the existing stock
+                            Util.removeStockInfo();
+
+                            //set every stock
+                            var stockInfo = data['retData']['stockinfo'];
+
+                            for (var i = 0; i < stockInfo.length; ++i) {
+
+                                var stock = new Stock(stockInfo[i]['name'],
+                                    stockInfo[i]['currentPrice'] === 0 ? stockInfo[i]['closingPrice'] : stockInfo[i]['currentPrice'],
+                                    stockInfo[i]['increase'] === -100 ? 0 : stockInfo[i]['increase'].toFixed(2));
+
+                                StockInfo.append(stock.showStockInfo());
+                            }
+                        }
+                    },
+                    function (data) {//query failed
+                        Util.showMsg(MSG.NETWORK_ERROR);
+                    });
+
+            });
+        }
+
+    };
+
+    $(document).ready(function(){
+
+        StockInput = $('#StockID');
+        StockInfo = $('#result');
+        AddBtn = $('#AddID');
+        DelBtn = $('#DelID');
+
+        ShPrice = $('#ShPrice');
+        SzPrice = $('#SzPrice');
+        HsPrice = $('#HsPrice');
+
+        ShIns = $('#ShIns');
+        SzIns = $('#SzIns');
+        HsIns = $('#HsIns');
+
+        //update popup page
+        popup.update();
+
+        //set add event handler
+        AddBtn.click(popup.add);
+
+        //set delete event handler
+        DelBtn.click(popup.del);
+
+        setInterval(popup.update, 2000);
     });
+
+
 })();

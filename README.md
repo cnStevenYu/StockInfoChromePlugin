@@ -7,7 +7,7 @@
 
 3. 每隔2秒刷新数据.
 
-![界面](https://github.com/cnStevenYu/StockInfoChromePlugin/blob/master/stockinfo.png)
+![界面](https://github.com/cnStevenYu/StockInfoChromePlugin/blob/master/images/stockinfo.png)
 ## 安装
 #### 下载源码
 下载源码.
