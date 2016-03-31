@@ -11,6 +11,6 @@
   },
   "permissions": [
     "storage",
-    "http://hq.sinajs.cn/"
+    "http://apis.baidu.com/apistore/"
   ]
 }
