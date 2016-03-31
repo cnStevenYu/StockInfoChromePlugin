@@ -225,24 +225,13 @@
 
                         //set market
                         var marketInfo = data['retData']['market'];
-
-                        var shMarket = new Market('shanghai',
-                            marketInfo['shanghai']['curdot'].toFixed(0),
-                            marketInfo['shanghai']['rate']);
-
-                        shMarket.showMarketInfo();
-
-                        var szMarket = new Market('shenzhen',
-                            marketInfo['shenzhen']['curdot'].toFixed(0),
-                            marketInfo['shenzhen']['rate']);
-
-                        szMarket.showMarketInfo();
-
-                        var hsMarket = new Market('HSI',
-                            marketInfo['HSI']['curdot'].toFixed(0),
-                            marketInfo['HSI']['rate']);
-
-                        hsMarket.showMarketInfo();
+                        var locations = ['shanghai', 'shenzhen', 'HSI'];
+                        for(var key in locations){
+                            var mkt = new Market(locations[key],
+                                        marketInfo[locations[key]]['curdot'].toFixed(0),
+                                        marketInfo[locations[key]]['rate']);
+                            mkt.showMarketInfo();
+                        }
 
                         if (stockIds.length > 0) {//if user has added stock ids.
 
