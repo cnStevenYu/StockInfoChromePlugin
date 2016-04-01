@@ -64,7 +64,6 @@
             }
             //query Baidu api check whether id is right or not
             this.query(val, function(data){
-                    //console.log(data);
                     if (data['errMsg'] != 'success' || data['retData']['stockinfo'][0]['name'].length === 0) {
                         this.showMsg(MSG.CODE_ERROR);
                         return;
@@ -175,7 +174,6 @@
 
                 Util.checkStockId(id, function (obj) {
                     chrome.storage.sync.set(obj, function () {
-                        //console.log(obj + 'added!');
                         Util.showMsg(MSG.ADD_INFO);
                     });
                 });
@@ -223,7 +221,6 @@
 
                 Util.query(stockIdPars,
                     function (data) { //query success
-                        console.log(data);
                         if (data['errMsg'] != 'success') {
                             Util.showMsg(MSG.SERVER_ERROR);
                             return;
