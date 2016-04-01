@@ -7,11 +7,9 @@
     //Baidu Stock Information api
     var QueryBaiduUrl = "http://apis.baidu.com/apistore/stockservice/stock";
 
-    /*!!!!!
-     *Please visit site http://apistore.baidu.com/apiworks/servicedetail/115.html to apply for a api key
-     */
-    //Baidu Stock Information Api Key
-    var ApiKey = '35cef313060e63e4fee417308aa83925';
+    //Please visit site http://apistore.baidu.com/apiworks/servicedetail/115.html to apply for a api key
+    //Baidu Stock Information Api Key, 目前可以为空
+    var ApiKey = '';
 
     //Dom elements
     var StockInput, StockInfo, AddBtn, DelBtn, ShPrice, SzPrice, HsPrice, ShIns, SzIns, HsIns;
@@ -22,7 +20,8 @@
         NETWORK_ERROR: '网络连接错误!',
         SERVER_ERROR: '服务器错误!',
         ADD_INFO: '添加成功!',
-        DEL_INFO: '删除成功!'
+        DEL_INFO: '删除成功!',
+        LIMIT_INFO: '只能添加10只股票!'
     };
 
     var Util = {
@@ -167,13 +166,20 @@
         add: function(){
             var id = StockInput.val();
 
-            Util.checkStockId(id, function (obj) {
-                chrome.storage.sync.set(obj, function () {
-                    //console.log(obj + 'added!');
-                    Util.showMsg(MSG.ADD_INFO);
+            chrome.storage.sync.get(null, function(items){
+                //make sure equal or less than 10 stocks
+                if(Object.keys(items).length >= 10){
+                    Util.showMsg(MSG.LIMIT_INFO);
+                    return;
+                }
+
+                Util.checkStockId(id, function (obj) {
+                    chrome.storage.sync.set(obj, function () {
+                        //console.log(obj + 'added!');
+                        Util.showMsg(MSG.ADD_INFO);
+                    });
                 });
             });
-
             //clear input
             StockInput.val('');
         },
